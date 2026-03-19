@@ -1,0 +1,27 @@
+{
+  "name": "starknet-mpp",
+  "version": "0.1.0",
+  "description": "Starknet MPP SDK — ERC-20 token payments over HTTP 402",
+  "type": "module",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./server": { "types": "./dist/server/index.d.ts", "default": "./dist/server/index.js" },
+    "./client": { "types": "./dist/client/index.d.ts", "default": "./dist/client/index.js" }
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["starknet", "mpp", "payments", "402", "erc20"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": { "@noble/hashes": "^2.0.1" },
+  "peerDependencies": { "starknet": "^9.0.0", "mppx": "^0.3.15" },
+  "devDependencies": { "starknet": "^9.0.0", "mppx": "^0.3.15", "@types/node": "^22.0.0", "typescript": "^5.9.3", "vitest": "^4.1.0" }
+}
