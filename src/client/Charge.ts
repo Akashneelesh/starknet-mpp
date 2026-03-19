@@ -1,10 +1,9 @@
 import { Method, Credential } from 'mppx'
-import { RpcProvider, Contract } from 'starknet'
+import { RpcProvider, CallData } from 'starknet'
 import * as Methods from '../Methods.js'
 import { RPC_ENDPOINTS } from '../constants.js'
 import type { StarknetNetwork, WalletLike } from '../types.js'
 import { parseAmount } from '../utils.js'
-import { ERC20_ABI } from '../abi.js'
 
 export namespace charge {
   export interface Parameters {
@@ -36,9 +35,15 @@ export function charge(parameters: charge.Parameters) {
 
       const amountRaw = parseAmount(amount, methodDetails.decimals)
 
-      // NOTE: starknet v9 Contract uses options object
-      const erc20 = new Contract({ abi: ERC20_ABI, address: methodDetails.tokenAddress, providerOrAccount: wallet.account })
-      const tx = await erc20.invoke('transfer', [methodDetails.recipient, amountRaw])
+      // Use account.execute() directly to avoid browser BigInt issues with Contract class
+      const tx = await wallet.account.execute({
+        contractAddress: methodDetails.tokenAddress,
+        entrypoint: 'transfer',
+        calldata: CallData.compile({
+          recipient: methodDetails.recipient,
+          amount: { low: amountRaw & ((1n << 128n) - 1n), high: amountRaw >> 128n },
+        }),
+      })
 
       await provider.waitForTransaction(tx.transaction_hash)
 

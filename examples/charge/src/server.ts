@@ -44,7 +44,7 @@ export async function handler(request: Request): Promise<Response | null> {
   const url = new URL(request.url)
   if (url.pathname === '/api/health') { return Response.json({ status: 'ok' }) }
   if (url.pathname === '/api/joke') {
-    const result = await mppx.charge({ amount: '0.000001', description: 'A programming joke' })(request)
+    const result = await mppx.charge({ amount: '0.000000000000001', description: 'A programming joke' })(request)
     if (result.status === 402) return result.challenge
     const joke = jokes[Math.floor(Math.random() * jokes.length)]!
     return result.withReceipt(Response.json({ joke }))
