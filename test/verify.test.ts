@@ -10,7 +10,8 @@ const RECIPIENT = '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789a
 const SENDER = '0xaabbccdd00112233aabbccdd00112233aabbccdd00112233aabbccdd00112233'
 const TRANSFER_KEY = '0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9'
 
-function makeTransferEvent(
+// Layout A: from/to in keys (OpenZeppelin with kind: "key")
+function makeTransferEventKeyed(
   from: string, to: string, amountLow: bigint, amountHigh: bigint = 0n, tokenAddress: string = TOKEN_ADDRESS,
 ) {
   return {
@@ -19,6 +20,20 @@ function makeTransferEvent(
     data: ['0x' + amountLow.toString(16), '0x' + amountHigh.toString(16)],
   }
 }
+
+// Layout B: from/to in data (STRK, some OZ contracts with kind: "data")
+function makeTransferEventData(
+  from: string, to: string, amountLow: bigint, amountHigh: bigint = 0n, tokenAddress: string = TOKEN_ADDRESS,
+) {
+  return {
+    from_address: tokenAddress,
+    keys: [TRANSFER_KEY],
+    data: [from, to, '0x' + amountLow.toString(16), '0x' + amountHigh.toString(16)],
+  }
+}
+
+// Default helper uses Layout A for backward compat
+const makeTransferEvent = makeTransferEventKeyed
 
 describe('normalizeAddress', () => {
   it('normalizes addresses with different leading zeros', () => {
@@ -57,8 +72,49 @@ describe('parseTransferEvents', () => {
 
   it('skips events with too few keys or data', () => {
     const events = [
-      { from_address: TOKEN_ADDRESS, keys: [TRANSFER_KEY], data: [] },
+      { from_address: TOKEN_ADDRESS, keys: [], data: [] },
       { from_address: TOKEN_ADDRESS, keys: [TRANSFER_KEY, SENDER], data: ['0x1'] },
+    ]
+    const transfers = parseTransferEvents(events, TOKEN_ADDRESS)
+    expect(transfers).toHaveLength(0)
+  })
+
+  it('skips events with wrong event selector', () => {
+    const events = [{
+      from_address: TOKEN_ADDRESS,
+      keys: ['0xdeadbeef', SENDER, RECIPIENT],
+      data: ['0x' + (1_000_000n).toString(16), '0x0'],
+    }]
+    const transfers = parseTransferEvents(events, TOKEN_ADDRESS)
+    expect(transfers).toHaveLength(0)
+  })
+})
+
+describe('parseTransferEvents (Layout B: from/to in data)', () => {
+  it('parses a valid Transfer event with data layout', () => {
+    const events = [makeTransferEventData(SENDER, RECIPIENT, 1_000_000n)]
+    const transfers = parseTransferEvents(events, TOKEN_ADDRESS)
+    expect(transfers).toHaveLength(1)
+    expect(transfers[0].amount).toBe(1_000_000n)
+    expect(transfers[0].to).toBe(normalizeAddress(RECIPIENT))
+    expect(transfers[0].from).toBe(normalizeAddress(SENDER))
+  })
+
+  it('handles Uint256 with non-zero high felt in data layout', () => {
+    const events = [makeTransferEventData(SENDER, RECIPIENT, 0n, 1n)]
+    const transfers = parseTransferEvents(events, TOKEN_ADDRESS)
+    expect(transfers[0].amount).toBe(1n << 128n)
+  })
+
+  it('filters out events from wrong token in data layout', () => {
+    const events = [makeTransferEventData(SENDER, RECIPIENT, 1_000_000n, 0n, '0x0deadbeef')]
+    const transfers = parseTransferEvents(events, TOKEN_ADDRESS)
+    expect(transfers).toHaveLength(0)
+  })
+
+  it('skips data-layout events with too few data fields', () => {
+    const events = [
+      { from_address: TOKEN_ADDRESS, keys: [TRANSFER_KEY], data: [SENDER, RECIPIENT] },
     ]
     const transfers = parseTransferEvents(events, TOKEN_ADDRESS)
     expect(transfers).toHaveLength(0)
