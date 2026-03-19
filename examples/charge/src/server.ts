@@ -10,7 +10,7 @@ const PROVIDER = new RpcProvider({
 const SERVER_PRIVATE_KEY = process.env.STARKNET_PRIVATE_KEY ?? '0x1234'
 const SERVER_ADDRESS = process.env.STARKNET_ADDRESS ?? '0x1234'
 
-const serverAccount = new Account(PROVIDER, SERVER_ADDRESS, SERVER_PRIVATE_KEY)
+const serverAccount = new Account({ provider: PROVIDER, address: SERVER_ADDRESS, signer: SERVER_PRIVATE_KEY })
 
 const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS ?? '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
 const DECIMALS = 18

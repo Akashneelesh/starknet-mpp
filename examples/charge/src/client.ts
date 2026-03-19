@@ -18,7 +18,7 @@ const PROVIDER = new RpcProvider({
 const PRIVATE_KEY = prompt('Enter your Starknet Sepolia private key:') ?? ''
 const ADDRESS = prompt('Enter your Starknet Sepolia address:') ?? ''
 
-const account = new Account(PROVIDER, ADDRESS, PRIVATE_KEY)
+const account = new Account({ provider: PROVIDER, address: ADDRESS, signer: PRIVATE_KEY })
 const wallet: WalletLike = { address: ADDRESS, account }
 
 let mppx: ReturnType<typeof Mppx.create>

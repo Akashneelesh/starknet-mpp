@@ -13,7 +13,7 @@ const ADDRESS = process.env.STARKNET_ADDRESS
 
 if (!PRIVATE_KEY || !ADDRESS) { console.error('Set STARKNET_PRIVATE_KEY and STARKNET_ADDRESS env vars'); process.exit(1) }
 
-const account = new Account(PROVIDER, ADDRESS, PRIVATE_KEY)
+const account = new Account({ provider: PROVIDER, address: ADDRESS, signer: PRIVATE_KEY })
 const wallet: WalletLike = { address: ADDRESS, account }
 
 console.log(`Client wallet: ${ADDRESS}`)
