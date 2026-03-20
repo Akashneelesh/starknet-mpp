@@ -28,8 +28,10 @@ connectBtn.addEventListener('click', async () => {
     const result = await sdk.onboard({
       strategy: OnboardStrategy.Cartridge,
       cartridge: {
-        preset: 'controller',
-        policies: [{ target: STRK_TOKEN_ADDRESS, method: 'approve' }],
+        policies: [
+          { target: STRK_TOKEN_ADDRESS, method: 'approve' },
+          { target: STRK_TOKEN_ADDRESS, method: 'transfer' },
+        ],
       },
       feeMode: 'user_pays',
     })
