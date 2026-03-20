@@ -5,15 +5,18 @@ export default defineConfig({
     outDir: 'dist-api',
     ssr: true,
     rollupOptions: {
-      input: 'api/bullish.ts',
+      input: {
+        bullish: 'api/bullish.ts',
+        faucet: 'api/faucet.ts',
+      },
       output: {
-        entryFileNames: 'bullish.mjs',
-        format: 'esm',
+        entryFileNames: '[name].cjs',
+        format: 'cjs',
+        exports: 'auto',
       },
     },
   },
   ssr: {
-    // Bundle everything so the serverless function is self-contained
     noExternal: true,
   },
 })

@@ -1,6 +1,6 @@
 import { Mppx, Store } from 'starknet-mpp/server'
 import { starknet } from 'starknet-mpp/server'
-import { RpcProvider, Account } from 'starknet'
+import { RpcProvider, Account, CallData } from 'starknet'
 
 const NETWORK = 'sepolia'
 const PROVIDER = new RpcProvider({
@@ -40,9 +40,42 @@ const bullishFacts = [
   'Privacy: STRK20s brings private balances and transfers to any ERC-20; strkBTC = private Bitcoin with BTCFi utility',
 ]
 
+// Track addresses that have already been funded (in-memory, resets on restart)
+const fundedAddresses = new Set<string>()
+const FAUCET_AMOUNT = 200000000000000000n // 0.2 STRK (18 decimals)
+
 export async function handler(request: Request): Promise<Response | null> {
   const url = new URL(request.url)
   if (url.pathname === '/api/health') { return Response.json({ status: 'ok' }) }
+
+  if (url.pathname === '/api/faucet' && request.method === 'POST') {
+    try {
+      const { address } = (await request.json()) as { address: string }
+      if (!address) return Response.json({ error: 'address required' }, { status: 400 })
+
+      const normalized = address.toLowerCase()
+      if (fundedAddresses.has(normalized)) {
+        return Response.json({ status: 'already_funded' })
+      }
+
+      const tx = await serverAccount.execute({
+        contractAddress: TOKEN_ADDRESS,
+        entrypoint: 'transfer',
+        calldata: CallData.compile({
+          recipient: address,
+          amount: { low: FAUCET_AMOUNT & ((1n << 128n) - 1n), high: FAUCET_AMOUNT >> 128n },
+        }),
+      })
+
+      await PROVIDER.waitForTransaction(tx.transaction_hash)
+      fundedAddresses.add(normalized)
+
+      return Response.json({ status: 'funded', transactionHash: tx.transaction_hash })
+    } catch (err: any) {
+      return Response.json({ error: err.message }, { status: 500 })
+    }
+  }
+
   if (url.pathname === '/api/bullish') {
     const result = await mppx.charge({ amount: '0.000000000000001', description: 'A bullish thing about Starknet' })(request)
     if (result.status === 402) return result.challenge

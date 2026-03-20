@@ -1,6 +1,7 @@
 import { Mppx, Store } from 'starknet-mpp/server'
 import { starknet } from 'starknet-mpp/server'
 import { RpcProvider } from 'starknet'
+import type { IncomingMessage, ServerResponse } from 'http'
 
 const NETWORK = 'sepolia'
 const PROVIDER = new RpcProvider({
@@ -36,9 +37,43 @@ const bullishFacts = [
   'Privacy: STRK20s brings private balances and transfers to any ERC-20; strkBTC = private Bitcoin with BTCFi utility',
 ]
 
-export default async function handler(request: Request): Promise<Response> {
-  const result = await mppx.charge({ amount: '0.000000000000001', description: 'A bullish thing about Starknet' })(request)
-  if (result.status === 402) return result.challenge
-  const fact = bullishFacts[Math.floor(Math.random() * bullishFacts.length)]!
-  return result.withReceipt(Response.json({ fact }))
+function toWebRequest(req: IncomingMessage): Request {
+  const proto = (req.headers['x-forwarded-proto'] as string) || 'https'
+  const host = (req.headers['x-forwarded-host'] as string) || req.headers.host || 'localhost'
+  const url = `${proto}://${host}${req.url}`
+
+  const headers = new Headers()
+  for (const [key, val] of Object.entries(req.headers)) {
+    if (val) headers.set(key, Array.isArray(val) ? val[0] : val)
+  }
+
+  return new Request(url, { method: req.method, headers })
+}
+
+async function sendWebResponse(res: ServerResponse, webRes: Response) {
+  res.statusCode = webRes.status
+  webRes.headers.forEach((v, k) => res.setHeader(k, v))
+  const body = await webRes.arrayBuffer()
+  res.end(Buffer.from(body))
+}
+
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  try {
+    const webRequest = toWebRequest(req)
+
+    const result = await mppx.charge({ amount: '0.000000000000001', description: 'A bullish thing about Starknet' })(webRequest)
+
+    if (result.status === 402) {
+      return sendWebResponse(res, result.challenge)
+    }
+
+    const fact = bullishFacts[Math.floor(Math.random() * bullishFacts.length)]!
+    const response = result.withReceipt(Response.json({ fact }))
+    return sendWebResponse(res, response)
+  } catch (err: any) {
+    console.error('API error:', err)
+    res.statusCode = 500
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ error: err.message, stack: err.stack }))
+  }
 }

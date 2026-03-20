@@ -45,6 +45,27 @@ connectBtn.addEventListener('click', async () => {
 
     log(`Wallet connected: ${address}`)
 
+    // Request STRK from treasury faucet
+    connectBtn.textContent = 'Funding wallet...'
+    log('Requesting 0.2 STRK from treasury...')
+    try {
+      const faucetRes = await fetch('/api/faucet', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ address }),
+      })
+      const faucetData = await faucetRes.json() as { status: string; transactionHash?: string; error?: string }
+      if (faucetData.status === 'funded') {
+        log(`Funded! tx: ${faucetData.transactionHash}`)
+      } else if (faucetData.status === 'already_funded') {
+        log('Wallet already funded')
+      } else {
+        log(`Faucet: ${faucetData.error || 'unknown response'}`)
+      }
+    } catch (err) {
+      log(`Faucet request failed: ${err}`)
+    }
+
     mppx = Mppx.create({
       methods: [starknet.charge({ wallet, network: 'sepolia', provider })],
       polyfill: false,
