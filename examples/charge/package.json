@@ -2,13 +2,18 @@
   "name": "starknet-mpp-charge-example",
   "type": "module",
   "private": true,
-  "scripts": { "dev": "vite", "build": "vite build", "preview": "vite preview" },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "@remix-run/node-fetch-server": "latest",
-    "starknet": "^9.0.0",
     "@types/node": "latest",
     "mppx": "^0.3.15",
+    "starknet": "^9.0.0",
     "starknet-mpp": "file:../../",
+    "starkzap": "^1.0.0",
     "typescript": "latest",
     "vite": "latest"
   }

@@ -8,11 +8,11 @@ const PROVIDER = new RpcProvider({
 })
 
 const SERVER_PRIVATE_KEY = process.env.STARKNET_PRIVATE_KEY ?? '0x1234'
-const SERVER_ADDRESS = process.env.STARKNET_ADDRESS ?? '0x1234'
+const SERVER_ADDRESS = process.env.STARKNET_ADDRESS ?? '0x07ECF868164055d6EC98C61a8a7DAc3c8150312d533E8f9c69D92b3162641F63'
 
 const serverAccount = new Account({ provider: PROVIDER, address: SERVER_ADDRESS, signer: SERVER_PRIVATE_KEY })
 
-const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS ?? '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
+const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS ?? '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d'
 const DECIMALS = 18
 
 const store = Store.memory()

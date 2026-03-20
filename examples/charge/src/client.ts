@@ -1,40 +1,61 @@
 import { Mppx } from 'starknet-mpp/client'
 import { starknet } from 'starknet-mpp/client'
-import { RpcProvider, Account } from 'starknet'
 import type { WalletLike } from 'starknet-mpp'
+import { StarkSDK, OnboardStrategy } from 'starkzap'
+import type { WalletInterface } from 'starkzap'
 
 const setupEl = document.getElementById('setup')!
 const readyEl = document.getElementById('ready')!
+const connectBtn = document.getElementById('connect-btn') as HTMLButtonElement
 const buttonEl = document.getElementById('button') as HTMLButtonElement
 const outputEl = document.getElementById('output')!
 const logEl = document.getElementById('log')!
 
 function log(msg: string) { logEl.textContent += `${logEl.textContent ? '\n' : ''}${msg}` }
 
-const PROVIDER = new RpcProvider({
-  nodeUrl: 'https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/YlfzdYl7LCk0JOPXVleaz',
-})
+const STRK_TOKEN_ADDRESS = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d'
 
-const PRIVATE_KEY = prompt('Enter your Starknet Sepolia private key:') ?? ''
-const ADDRESS = prompt('Enter your Starknet Sepolia address:') ?? ''
-
-const account = new Account({ provider: PROVIDER, address: ADDRESS, signer: PRIVATE_KEY })
-const wallet: WalletLike = { address: ADDRESS, account }
+const sdk = new StarkSDK({ network: 'sepolia' })
 
 let mppx: ReturnType<typeof Mppx.create>
 
-try {
-  log(`Wallet: ${ADDRESS}`)
-  mppx = Mppx.create({
-    methods: [starknet.charge({ wallet, network: 'sepolia', provider: PROVIDER })],
-    polyfill: false,
-  })
-  setupEl.style.display = 'none'
-  readyEl.style.display = 'block'
-} catch (err) {
-  setupEl.textContent = `Setup failed: ${err}`
-  log(`Error: ${err}`)
-}
+connectBtn.addEventListener('click', async () => {
+  connectBtn.disabled = true
+  connectBtn.textContent = 'Connecting...'
+  log('Connecting with Cartridge Controller...')
+
+  try {
+    const result = await sdk.onboard({
+      strategy: OnboardStrategy.Cartridge,
+      cartridge: {
+        preset: 'controller',
+        policies: [{ target: STRK_TOKEN_ADDRESS, method: 'approve' }],
+      },
+      feeMode: 'user_pays',
+    })
+
+    const szWallet: WalletInterface = result.wallet
+    const address = szWallet.address
+    const account = szWallet.getAccount()
+    const provider = szWallet.getProvider()
+
+    const wallet: WalletLike = { address, account }
+
+    log(`Wallet connected: ${address}`)
+
+    mppx = Mppx.create({
+      methods: [starknet.charge({ wallet, network: 'sepolia', provider })],
+      polyfill: false,
+    })
+
+    setupEl.style.display = 'none'
+    readyEl.style.display = 'block'
+  } catch (err) {
+    log(`Connection failed: ${err}`)
+    connectBtn.disabled = false
+    connectBtn.textContent = 'Connect Wallet'
+  }
+})
 
 buttonEl.addEventListener('click', async () => {
   buttonEl.disabled = true
