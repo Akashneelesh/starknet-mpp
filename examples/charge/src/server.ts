@@ -31,23 +31,23 @@ const mppx = Mppx.create({
   secretKey: 'starknet-mpp-example-secret',
 })
 
-const jokes = [
-  'Why do programmers prefer dark mode? Because light attracts bugs.',
-  'There are only 10 types of people in the world: those who understand binary and those who don\'t.',
-  'A SQL query walks into a bar, sees two tables, and asks... "Can I JOIN you?"',
-  'Why do Java developers wear glasses? Because they can\'t C#.',
-  'What\'s the object-oriented way to become wealthy? Inheritance.',
-  'Why do blockchain devs never get lost? They always follow the chain.',
+const bullishFacts = [
+  'Scalability: ~1K TPS now, targeting 10K+ by 2027, sub-second finality, fees under $0.01',
+  'Onchain Compute: Heaviest compute capacity of any L2 — enabling fully onchain games, perp DEXs, verifiable AI',
+  'Web2 UX: Native account abstraction, invisible wallets, paymasters, session keys — 30-second onboarding, zero friction',
+  'Decentralization: First rollup with decentralized sequencer (live); dual-token staking with STRK + BTC; full decentralization by 2027',
+  'Post-Quantum: STARKs are quantum-resistant by design; programmable accounts make wallet upgrades easier when the time comes',
+  'Privacy: STRK20s brings private balances and transfers to any ERC-20; strkBTC = private Bitcoin with BTCFi utility',
 ]
 
 export async function handler(request: Request): Promise<Response | null> {
   const url = new URL(request.url)
   if (url.pathname === '/api/health') { return Response.json({ status: 'ok' }) }
-  if (url.pathname === '/api/joke') {
-    const result = await mppx.charge({ amount: '0.000000000000001', description: 'A programming joke' })(request)
+  if (url.pathname === '/api/bullish') {
+    const result = await mppx.charge({ amount: '0.000000000000001', description: 'A bullish thing about Starknet' })(request)
     if (result.status === 402) return result.challenge
-    const joke = jokes[Math.floor(Math.random() * jokes.length)]!
-    return result.withReceipt(Response.json({ joke }))
+    const fact = bullishFacts[Math.floor(Math.random() * bullishFacts.length)]!
+    return result.withReceipt(Response.json({ fact }))
   }
   return null
 }

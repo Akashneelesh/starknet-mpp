@@ -41,12 +41,12 @@ buttonEl.addEventListener('click', async () => {
   outputEl.textContent = ''
   outputEl.className = ''
   try {
-    log('GET /api/joke')
-    const res = await mppx.fetch('/api/joke')
+    log('GET /api/bullish')
+    const res = await mppx.fetch('/api/bullish')
     log(`HTTP ${res.status}`)
     if (!res.ok) { const body = await res.text(); log(`Body: ${body}`); throw new Error(`Request failed: ${res.status}`) }
-    const { joke } = (await res.json()) as { joke: string }
-    outputEl.textContent = joke
+    const { fact } = (await res.json()) as { fact: string }
+    outputEl.textContent = fact
   } catch (err) {
     outputEl.textContent = String(err)
     outputEl.className = 'error'

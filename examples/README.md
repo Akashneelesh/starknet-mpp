@@ -2,7 +2,7 @@
 
 ## Charge Example (Pay-Per-Request)
 
-Browser-based example: pay 0.000001 ETH per joke on Starknet Sepolia.
+Browser-based example: pay a tiny amount of STRK to hear a bullish thing about Starknet on Sepolia.
 
 ```bash
 cd examples/charge
